@@ -4,12 +4,17 @@
   "description": "WebFront learning about me.",
   "main": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test Calculator": "mocha Calculator/test.js",
+    "test Promise/A+": "promises-aplus-tests Promise/Promise.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com//wangnan0916/WebFront.git"
   },
   "author": "shampoo",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "mocha": "^9.2.2",
+    "promises-aplus-tests": "^2.1.2"
+  }
 }
