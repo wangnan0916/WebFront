@@ -2,7 +2,6 @@
  * @module Calculator
  * @description JavaScript 大数计算机，包含加、减、乘和除，支持负数，目前不支持小数运算。
  * */
-
 var Calculator = Object.create(null);
 
 Calculator.utils = {

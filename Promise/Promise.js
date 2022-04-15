@@ -111,7 +111,7 @@ function resolvePromise(base, x) {
             x.then(function (y) {
                 resolvePromise(base, y);
             }).catch(base.reject);
-        } else return x.then(base.resolve, base.reject);
+        } else x.then(base.resolve, base.reject);
         return;
     }
     if (/object|function/.test(typeof x) && x !== null) {
