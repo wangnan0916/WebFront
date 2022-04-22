@@ -79,13 +79,13 @@ Promise.prototype.catch = function (onRejected) {
 }
 
 Promise.resolve = function (value) {
-    let base = Promise.deferred();
+    var base = Promise.deferred();
     base.resolve(value);
     return base.promise;
 }
 
 Promise.reject = function (reason) {
-    let base = Promise.deferred();
+    var base = Promise.deferred();
     base.reject(reason);
     return base.promise;
 }
