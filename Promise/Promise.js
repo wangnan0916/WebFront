@@ -154,4 +154,23 @@ function resolvePromise(base, x) {
     base.fulfill(x);
 }
 
+Promise.all = function (prs) {
+    var n = prs.length, rest = n;
+    var res = new Array(n).fill(undefined);
+    var def = Promise.deferred();
+    for (var i = 0; i < n; i++) {
+        (function (i) {
+            var p = prs[i];
+            Promise.resolve(p).then(function (val) {
+                res[i] = val;
+                rest--;
+                if (rest == 0) def.resolve(res);
+            }).catch(function (err) {
+                def.reject(err);
+            })
+        })(i);
+    }
+    return def.promise;
+}
+
 module.exports = Promise;
