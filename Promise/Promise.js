@@ -13,9 +13,8 @@ function Promise(executor) {
     this.onRejectedCallback = [];
 
     function fulfill(value) {
-        if (self.status !== PENDING) return;
-
         queueMicrotask(function () {
+            if (self.status !== PENDING) return;
             self.status = FULFILLED;
             self.value = value;
             self.onFulfilledCallback.forEach(cb => cb(value));
@@ -23,9 +22,8 @@ function Promise(executor) {
     }
 
     function reject(reason) {
-        if (self.status !== PENDING) return;
-
         queueMicrotask(() => {
+            if (self.status !== PENDING) return;
             self.status = REJECTED;
             self.reason = reason;
             self.onRejectedCallback.forEach(cb => cb(reason));
