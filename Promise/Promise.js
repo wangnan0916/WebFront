@@ -173,4 +173,15 @@ Promise.all = function (prs) {
     return def.promise;
 }
 
+Promise.race = function (prs) {
+    var n = prs.length;
+    var def = Promise.deferred();
+    for (var i = 0; i < n; i++) {
+        (function (i) {
+            Promise.resolve(prs[i]).then(def.resolve).catch(def.reject)
+        })(i);
+    }
+    return def.promise;
+}
+
 module.exports = Promise;
