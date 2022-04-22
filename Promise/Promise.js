@@ -12,9 +12,9 @@ function Promise(executor) {
     this.onFulfilledCallback = [];
     this.onRejectedCallback = [];
 
-    function resolve(value) {
+    function fulfill(value) {
         if (self.status !== PENDING) return;
-        if (value instanceof Promise) return value.then(resolve, reject);
+
         queueMicrotask(function () {
             self.status = FULFILLED;
             self.value = value;
@@ -24,11 +24,16 @@ function Promise(executor) {
 
     function reject(reason) {
         if (self.status !== PENDING) return;
+
         queueMicrotask(() => {
             self.status = REJECTED;
             self.reason = reason;
             self.onRejectedCallback.forEach(cb => cb(reason));
         });
+    }
+
+    function resolve(value) {
+        resolvePromise({promise: self, fulfill, reject}, value);
     }
 
     try {
@@ -39,31 +44,33 @@ function Promise(executor) {
 }
 
 Promise.prototype.then = function (onFulfilled, onRejected) {
-    var base = {};
-    base.promise = new Promise(function (resolve, reject) {
-        base.resolve = resolve;
-        base.reject = reject;
-    });
+    var base = Promise.deferred();
+
     if (typeof onFulfilled !== "function") {
         onFulfilled = function (value) {
             return value;
         }
     }
+
     if (typeof onRejected !== "function") {
         onRejected = function (reason) {
             throw reason;
         }
     }
+
     if (this.status === PENDING) {
         this.onFulfilledCallback.push(createTask(base, onFulfilled));
         this.onRejectedCallback.push(createTask(base, onRejected));
     }
+
     if (this.status === FULFILLED) {
         queueMicrotask(createTask(base, onFulfilled, this.value));
     }
+
     if (this.status === REJECTED) {
         queueMicrotask(createTask(base, onRejected, this.reason));
     }
+
     return base.promise;
 }
 
@@ -72,24 +79,24 @@ Promise.prototype.catch = function (onRejected) {
 }
 
 Promise.resolve = function (value) {
-    return new Promise(function (resolve) {
-        resolve(value);
-    });
+    let base = Promise.deferred();
+    base.resolve(value);
+    return base.promise;
 }
 
 Promise.reject = function (reason) {
-    return new Promise(function (_, reject) {
-        return reject(reason);
-    });
+    let base = Promise.deferred();
+    base.reject(reason);
+    return base.promise;
 }
 
 Promise.deferred = function () {
-    var res = {};
-    res.promise = new Promise((resolve, reject) => {
-        res.resolve = resolve;
-        res.reject = reject;
+    var dfe = {};
+    dfe.promise = new Promise((resolve, reject) => {
+        dfe.resolve = resolve;
+        dfe.reject = reject;
     });
-    return res;
+    return dfe;
 }
 
 function createTask(base, callback, defaultArg) {
@@ -97,7 +104,7 @@ function createTask(base, callback, defaultArg) {
     return function (arg) {
         try {
             var x = callback(usingDefaultArg ? defaultArg : arg);
-            resolvePromise(base, x);
+            base.resolve(x);
         } catch (e) {
             base.reject(e);
         }
@@ -105,33 +112,39 @@ function createTask(base, callback, defaultArg) {
 }
 
 function resolvePromise(base, x) {
-    if (base.promise === x) return base.reject(new TypeError("Circular Reference"));
+    if (base.promise === x) {
+        base.reject(new TypeError("Circular Reference"));
+        return;
+    }
+
     if (x instanceof Promise) {
         if (x.status === PENDING) {
             x.then(function (y) {
                 resolvePromise(base, y);
             }).catch(base.reject);
-        } else x.then(base.resolve, base.reject);
+        } else x.then(base.fulfill, base.reject);
         return;
     }
+
     if (/object|function/.test(typeof x) && x !== null) {
         try {
             var called = false;
             var then = x.then;
 
             if (typeof then === "function") {
-                then.call(x,
-                    function (y) {
-                        if (called) return;
-                        called = true;
-                        resolvePromise(base, y);
-                    },
-                    function (reason) {
-                        if (called) return;
-                        called = true;
-                        base.reject(reason);
-                    });
-            } else base.resolve(x);
+                then.call(x, function (y) {
+                    if (called) return;
+                    called = true;
+                    resolvePromise(base, y);
+                }, function (reason) {
+                    if (called) return;
+                    called = true;
+                    base.reject(reason);
+                });
+            } else {
+                base.fulfill(x);
+                return;
+            }
         } catch (e) {
             if (called) return;
             called = true;
@@ -140,7 +153,7 @@ function resolvePromise(base, x) {
         return;
     }
 
-    base.resolve(x);
+    base.fulfill(x);
 }
 
 module.exports = Promise;
