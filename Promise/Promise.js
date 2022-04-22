@@ -76,6 +76,14 @@ Promise.prototype.catch = function (onRejected) {
     return this.then(undefined, onRejected);
 }
 
+Promise.prototype.finally = function (callback) {
+    return this.then(function () {
+        return callback();
+    }, function () {
+        return callback();
+    });
+}
+
 Promise.resolve = function (value) {
     var base = Promise.deferred();
     base.resolve(value);
