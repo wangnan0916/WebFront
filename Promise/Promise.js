@@ -184,4 +184,20 @@ Promise.race = function (prs) {
     return def.promise;
 }
 
+Promise.map = function (items, callback) {
+    var prs = items.map(function (item) {
+        var pr = Promise.deferred();
+        Promise.resolve(item).then(function (res) {
+            try {
+                var val = callback(res);
+                pr.resolve(val);
+            } catch (e) {
+                pr.resolve(e);
+            }
+        }).catch(pr.resolve)
+        return pr.promise;
+    });
+    return Promise.all(prs);
+}
+
 module.exports = Promise;
