@@ -93,13 +93,13 @@ function Observer(data, vm, fullkey) {
         //生成keyString用于通知依赖
         let keyString = [...fullkey, key].toKeyString();
 
-        console.log(`fullkey --> ${fullkey},keyString in setter --> ${keyString}`);
+        //console.log(`fullkey --> ${fullkey},keyString in setter --> ${keyString}`);
 
         Object.defineProperty(data, key, {
             enumerable: true,
             configurable: true,
             set(newValue) {
-                console.log(`set[${key}],old:${value},new:${newValue}`);
+                //console.log(`set[${key}],old:${value},new:${newValue}`);
                 value = newValue;
                 if (isObject(newValue))
                     Observer(newValue, vm, [...fullkey, key]);
@@ -123,11 +123,11 @@ function Observer(data, vm, fullkey) {
 function Compile(element, vm) {
     let el = vm.$el = document.querySelector(element);
     /**
-     * fragment
-     * 1、不是真正渲染的dom树
-     * 2、可以将元素放入fragment中，操作完成后再添加至Dom树中
-     * 3、这样只需要对所有的修改进行一次渲染即可
-     * 4、否则需要多次触发浏览器的重绘
+     * fragment 文档片段
+     * 1.没有父对象的最小文档对象，它被作为一个轻量版的Dom使用。
+     * 2.在功能上，与标准Dom相同。最大的区别是，DomFrag不是真实Dom树的一部分。
+     * 3.它的变化不会触发Dom树的重新渲染，并且不会导致性能问题。
+     * 4.最常用的方法，将真实Dom存入fragment中，对其进行批量修改，然后统一添加至Dom树中，这样所有修改的元素只需要一次重新渲染的操作，否则需要多次。
      * */
     let fragment = document.createDocumentFragment();
     let child;
@@ -150,12 +150,11 @@ function Compile(element, vm) {
             let template = pattern.exec(nv);
             if (!template) return;
             let bindKey = template[1].formatterKey()
-            //console.log(`render ${bindKey}:${vm.$data.get(bindKey)} to dom`)
+            // console.log(`render ${bindKey}:${vm.$data.get(bindKey)} to dom`)
             // console.log(`toKeyString:${bindKey.toKeyArray().toKeyString()}`)
             node.nodeValue = nv.replace(pattern, vm.$data.get(bindKey));
 
             new Watcher(vm, bindKey, (change) => {
-                //更新文本节点中的值
                 node.nodeValue = nv.replace(pattern, change);
             });
         }
@@ -181,7 +180,7 @@ function Compile(element, vm) {
 }
 
 /**
- * 依赖-观察者
+ * 依赖&观察者
  * */
 class Dependency {
     constructor() {
