@@ -88,7 +88,7 @@ function Observer(data, vm, fullkey) {
          * */
         let value = data[key];
         //递归进行添加setter和getter
-        if (isObject(value)) return Observer(value, vm, [...fullkey, key]);
+        if (isObject(value)) Observer(value, vm, [...fullkey, key]);
 
         //生成keyString用于通知依赖
         let keyString = [...fullkey, key].toKeyString();
@@ -99,10 +99,22 @@ function Observer(data, vm, fullkey) {
             enumerable: true,
             configurable: true,
             set(newValue) {
-                //console.log(`set[${key}],old:${value},new:${newValue}`);
-                value = newValue;
-                if (isObject(newValue))
+                let oldValue = value;
+                //console.log(`set[${key}],old:${oldValue},new:${newValue}`);
+                if (isObject(newValue)) {
+                    //新修改的newvalue是一个对象
                     Observer(newValue, vm, [...fullkey, key]);
+                }
+                if (isObject(oldValue) && !isObject(newValue)) {
+                    //新修改的是一个基本值，但是旧值是对象，删除原来对old value对象中的依赖
+                    Object.keys(vm.$deps).map(fk => {
+                        if (fk.startsWith(key + "[")) {
+                            //console.log(`remove dependency ${fk}`);
+                            delete vm.$deps[fk];
+                        }
+                    });
+                }
+                value = newValue;
                 if (vm.$deps[keyString]) {
                     //console.log(`notify ${keyString} dependency`);
                     vm.$deps[keyString].notify(newValue);
