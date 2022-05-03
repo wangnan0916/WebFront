@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+<div id="app">
+  <h1>{{title}}</h1>
+  <div>
+    <p>name:{{user.name}}</p>
+    <p>age:{{user['age']}}</p>
+    <p>city:{{city}}</p>
+    <p>nickname:{{user.nickname[0]}}</p>
+  </div>
+  <div>
+    <label for="title">
+      title
+      <input type="text" id="title" v-module="title">
+    </label>
+    <label for="name">
+      name
+      <input type="text" id="name" v-module="user.name">
+    </label>
+    <label for="age">
+      age
+      <input type="number" id="age" v-module="user.age">
+    </label>
+    <label for="nickname">
+      nickname
+      <input type="text" id="nickname" v-module="user.nickname[0]">
+    </label>
+    <input type="text">
+  </div>
+</div>
+<script src="Vue.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      title: "Vue-mini",
+      user: {
+        name: "wangnan",
+        age: 10,
+        nickname: ['zs', 'ls', 'ww']
+      }
+    }
+  });
+</script>
+</body>
+</html>
