@@ -156,7 +156,7 @@ function clearLeadingZero(num) {
  * @description 将字符串转换为数字数组，并且去除符号和无效的前导0
  *
  * @param {String} num
- * @param {Boolean} [ignoreSign=false] ignoreSign 忽略数字的符号
+ * @param {Boolean} [ignoreSign=false] ignoreSign  忽略数字的符号
  * @return {Array<Number>} 格式化后的数字
  * */
 function numberToArray(num, ignoreSign = false) {

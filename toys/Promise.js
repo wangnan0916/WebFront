@@ -207,5 +207,4 @@ Promise.map = function (items, callback) {
     });
     return Promise.all(prs);
 }
-
 module.exports = Promise;
