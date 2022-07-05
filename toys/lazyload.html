@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        img {
+            display: block;
+            width: 300px;
+            height: 300px;
+        }
+
+        .delay-image {
+            position: relative;
+            object-position: center;
+            object-fit: scale-down;
+            border: 1px dashed black;
+        }
+    </style>
+</head>
+<body>
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?1" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?2" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?3" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?4" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?5" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?6" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?7" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?8" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?9" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?0" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?11" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?12" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?13" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?14" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?15" alt="">
+<img class="delay-image" data-src="https://picsum.photos/id/512/300/300?16" alt="">
+<script src="toys/debounce&throttle.js"></script>
+<script !src="">
+    (function () {
+        const loadingIcon = "data:img/jpg;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAAsElE\n" +
+            "QVRIie2SQQrCMBBFHx7EXsfitawH6G3U7kTwHK0nsK7VRVKsIc0kQwpd9EEWCX/4M38CKzNwA66x\n" +
+            "4o3C4A18FHVeYrud1EkTxHabdaplUwAN8AIuwDa3QYPJcjjnhNqjbawKiXrH4JlgMNT+1bi/6C7c\n" +
+            "Q9SYCeqQqMDE0gMnZtjBYolasMseeAAdUApa74IlOn6/qRW0lTU55DBQxeGjtCYtsBu9q+JIQRXH\n" +
+            "yiRftjU7tsH1luUAAAAASUVORK5CYII=";
+        const imgs = document.querySelectorAll("img.delay-image");
+        const obv = new IntersectionObserver(function (changes) {
+            changes.forEach(ch => {
+                if (!ch.isIntersecting) return;
+                const el = ch.target;
+                el.setAttribute('src', el.getAttribute('data-src'));
+                el.removeAttribute('data-src');
+                obv.unobserve(el);
+            })
+        }, {rootMargin: '100px'});
+        imgs.forEach(img => {
+            img.setAttribute("src", loadingIcon)
+            obv.observe(img);
+        });
+        //scroll+throttle
+        // const handler = debounce(function () {
+        //     // const scrollTop = document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset;
+        //     const clientHeight = window.screen.availHeight;
+        //     imgs.forEach((el) => {
+        //         if (el.getBoundingClientRect().top - clientHeight <= 100) {
+        //             el.setAttribute('src', el.getAttribute('data-src'));
+        //             el.onload = function () {
+        //                 imgs.delete(el);
+        //                 el.onload = null;
+        //                 if (imgs.size === 0) {
+        //                     window.removeEventListener('scroll', handler);
+        //                 }
+        //             }
+        //         }
+        //     });
+        // }, 1000 / 60);
+        // window.addEventListener('scroll', handler);
+        // handler();
+    })();
+</script>
+</body>
+</html>

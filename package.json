@@ -5,12 +5,14 @@
   "main": "",
   "scripts": {
     "test Calculator": "mocha Calculator/test.js",
-    "test Promise/A+": "promises-aplus-tests Promise/Promise.js"
+    "test Promise/A+": "promises-aplus-tests toys/Promise.js",
+    "test1 Promise/A+": "promises-aplus-tests testing/test.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com//wangnan0916/WebFront.git"
   },
+  "type": "commonjs",
   "author": "shampoo",
   "license": "MIT",
   "dependencies": {
