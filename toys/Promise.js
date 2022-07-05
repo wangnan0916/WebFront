@@ -1,10 +1,8 @@
-var PENDING = "PENDING";
-var FULFILLED = "FULFILLED";
-var REJECTED = "REJECTED";
+const PENDING = "PENDING";
+const FULFILLED = "FULFILLED";
+const REJECTED = "REJECTED";
 
 function Promise(executor) {
-    var self = this;
-
     this.status = PENDING;
     this.value = undefined;
     this.reason = undefined;
@@ -12,28 +10,53 @@ function Promise(executor) {
     this.onFulfilledCallback = [];
     this.onRejectedCallback = [];
 
-    function fulfill(value) {
-        queueMicrotask(function () {
-            if (self.status !== PENDING) return;
-            self.status = FULFILLED;
-            self.value = value;
-            self.onFulfilledCallback.forEach(cb => cb(value));
-        });
+    const resolve = (x) => {
+        if (x === this) return reject(new TypeError("循环引用！"));
+        if (x instanceof Promise) {
+            x.then(resolve, reject);
+            return;
+        }
+        if (["object", "function"].includes(typeof x) && x !== null) {
+            let called = false;
+            try {
+                let then = x.then;
+                if (typeof then === "function") {
+                    then.call(x, function (y) {
+                        if (called) return;
+                        called = true;
+                        resolve(y);
+                    }, function (reason) {
+                        if (called) return;
+                        called = true;
+                        reject(reason);
+                    })
+                } else fulfill(x);
+            } catch (e) {
+                if (called) return;
+                called = true;
+                reject(e);
+            }
+            return;
+        }
+        fulfill(x);
     }
-
-    function reject(reason) {
+    const fulfill = (value) => {
         queueMicrotask(() => {
-            if (self.status !== PENDING) return;
-            self.status = REJECTED;
-            self.reason = reason;
-            self.onRejectedCallback.forEach(cb => cb(reason));
-        });
+            if (this.status !== PENDING) return;
+            this.status = FULFILLED;
+            this.value = value;
+            this.onFulfilledCallback.forEach(cb => cb(value));
+        })
     }
+    const reject = (reason) => {
+        queueMicrotask(() => {
+            if (this.status !== PENDING) return;
+            this.status = REJECTED;
+            this.reason = reason;
+            this.onRejectedCallback.forEach(cb => cb(reason));
+        })
 
-    function resolve(value) {
-        resolvePromise({promise: self, fulfill, reject}, value);
     }
-
     try {
         executor(resolve, reject);
     } catch (e) {
@@ -42,124 +65,48 @@ function Promise(executor) {
 }
 
 Promise.prototype.then = function (onFulfilled, onRejected) {
-    var base = Promise.deferred();
-
     if (typeof onFulfilled !== "function") {
         onFulfilled = function (value) {
             return value;
         }
     }
-
     if (typeof onRejected !== "function") {
         onRejected = function (reason) {
             throw reason;
         }
     }
-
-    if (this.status === PENDING) {
-        this.onFulfilledCallback.push(createTask(base, onFulfilled));
-        this.onRejectedCallback.push(createTask(base, onRejected));
-    }
-
-    if (this.status === FULFILLED) {
-        queueMicrotask(createTask(base, onFulfilled, this.value));
-    }
-
-    if (this.status === REJECTED) {
-        queueMicrotask(createTask(base, onRejected, this.reason));
-    }
-
-    return base.promise;
+    return new Promise((resolve, reject) => {
+        if (this.status === PENDING) {
+            this.onFulfilledCallback.push(createTask(onFulfilled, resolve, reject));
+            this.onRejectedCallback.push(createTask(onRejected, resolve, reject));
+        }
+        if (this.status === FULFILLED) {
+            queueMicrotask(createTask(onFulfilled, resolve, reject, this.value));
+        }
+        if (this.status === REJECTED) {
+            queueMicrotask(createTask(onRejected, resolve, reject, this.reason));
+        }
+    });
 }
-
 Promise.prototype.catch = function (onRejected) {
     return this.then(undefined, onRejected);
 }
-
 Promise.prototype.finally = function (callback) {
-    return this.then(function () {
-        return callback();
-    }, function () {
-        return callback();
-    });
+    return this.then(callback, callback);
 }
-
-Promise.resolve = function (value) {
-    var base = Promise.deferred();
-    base.resolve(value);
-    return base.promise;
+Promise.resolve = function (x) {
+    return new Promise(resolve => resolve(x));
 }
-
 Promise.reject = function (reason) {
-    var base = Promise.deferred();
-    base.reject(reason);
-    return base.promise;
+    return new Promise((_, reject) => reject(reason));
 }
-
 Promise.deferred = function () {
-    var dfe = {};
+    const dfe = {};
     dfe.promise = new Promise((resolve, reject) => {
         dfe.resolve = resolve;
         dfe.reject = reject;
     });
     return dfe;
-}
-
-function createTask(base, callback, defaultArg) {
-    var usingDefaultArg = arguments.length === 3;
-    return function (arg) {
-        try {
-            var x = callback(usingDefaultArg ? defaultArg : arg);
-            base.resolve(x);
-        } catch (e) {
-            base.reject(e);
-        }
-    }
-}
-
-function resolvePromise(base, x) {
-    if (base.promise === x) {
-        base.reject(new TypeError("Circular Reference"));
-        return;
-    }
-
-    if (x instanceof Promise) {
-        if (x.status === PENDING) {
-            x.then(function (y) {
-                resolvePromise(base, y);
-            }).catch(base.reject);
-        } else x.then(base.fulfill, base.reject);
-        return;
-    }
-
-    if (/object|function/.test(typeof x) && x !== null) {
-        try {
-            var called = false;
-            var then = x.then;
-
-            if (typeof then === "function") {
-                then.call(x, function (y) {
-                    if (called) return;
-                    called = true;
-                    resolvePromise(base, y);
-                }, function (reason) {
-                    if (called) return;
-                    called = true;
-                    base.reject(reason);
-                });
-            } else {
-                base.fulfill(x);
-                return;
-            }
-        } catch (e) {
-            if (called) return;
-            called = true;
-            base.reject(e);
-        }
-        return;
-    }
-
-    base.fulfill(x);
 }
 
 Promise.all = function (prs) {
@@ -207,4 +154,17 @@ Promise.map = function (items, callback) {
     });
     return Promise.all(prs);
 }
+
+function createTask(callback, resolve, reject, defaultArg) {
+    let usingDefaultArg = arguments.length === 4;
+    return function (value) {
+        try {
+            resolve(callback(usingDefaultArg ? defaultArg : value));
+        } catch (e) {
+            reject(e);
+        }
+    }
+
+}
+
 module.exports = Promise;
